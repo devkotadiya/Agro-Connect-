@@ -23,7 +23,7 @@ def create_app():
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
     
-    default_db_url = 'postgresql://postgres:Dhruvi123@localhost/agroconnect'
+    default_db_url = 'postgresql+psycopg2://postgres:Dev26%402006@localhost:5432/agroconnect'
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', default_db_url)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
