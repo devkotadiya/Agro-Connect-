@@ -1,0 +1,9 @@
+.env
+cookies.txt
+__pycache__/
+*.pyc
+backend/venv/
+venv/
+instance/
+.DS_Store
+__MACOSX/
