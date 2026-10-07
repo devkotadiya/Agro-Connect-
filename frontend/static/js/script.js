@@ -89,14 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            var step1 = document.getElementById('step-1');
-            var step2 = document.getElementById('step-2');
-            var step3 = document.getElementById('step-3');
-
-            if (step1 && step2) {
-                step1.classList.remove('active');
-                step2.classList.add('active');
-            }
 
             var resultContainer = document.getElementById('result-container');
             resultContainer.style.display = 'block';
@@ -160,10 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     cap.textContent = 'Current user data';
                 });
 
-                if (step2 && step3) {
-                    step2.classList.remove('active');
-                    step3.classList.add('active');
-                }
 
                 if (successModal && successModalTitle && successModalBody) {
                     successModalTitle.innerHTML = '<span class="modal-header-icon">🌾</span> Analysis Completed!';
