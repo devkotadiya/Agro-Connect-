@@ -24,7 +24,20 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
     
     default_db_url = 'postgresql+psycopg2://postgres:Dev26%402006@localhost:5432/agroconnect'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', default_db_url)
+    db_uri = os.environ.get('DATABASE_URL', default_db_url)
+    if db_uri.startswith('postgresql'):
+        try:
+            from sqlalchemy import create_engine, text
+            probe_engine = create_engine(db_uri, connect_args={'connect_timeout': 3})
+            with probe_engine.connect() as conn:
+                conn.execute(text('SELECT 1'))
+            probe_engine.dispose()
+        except Exception as e:
+            print(f"[AgroConnect] PostgreSQL connection failed: {e}")
+            print("[AgroConnect] Falling back to SQLite database (sqlite:///agroconnect.db)...")
+            db_uri = 'sqlite:///agroconnect.db'
+            
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize extensions with app

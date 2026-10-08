@@ -41,13 +41,7 @@
     </header>
     
     <main>
-        
-        <div class="welcome-banner" style="background: var(--color-primary); color: white; padding: 2.5rem 2rem; text-align: center; margin-bottom: 2.5rem; border-radius: 0 0 30px 30px; box-shadow: 0 10px 30px rgba(27, 94, 32, 0.2);">
-            <h1 id="dash-greeting" style="color: white; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">Good Morning 👋</h1>
-            <p style="opacity: 0.9; font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">Here's today's overview of your farm.</p>
-        </div>
-        
-        <div style="max-width: 1200px; margin: 0 auto 2rem auto; padding: 0 2rem;">
+        <div style="max-width: 1200px; margin: 2rem auto; padding: 0 2rem;">
             <div class="module-card" style="margin-bottom: 2.5rem; border: none; box-shadow: 0 12px 40px rgba(0,0,0,0.06); border-radius: 20px; overflow: hidden;">
                 <div style="background: linear-gradient(135deg, rgba(27, 94, 32, 0.05), rgba(76, 175, 80, 0.05)); padding: 1.5rem 2rem; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
                     <h2 class="card-title" style="margin: 0; font-size: 1.5rem; color: var(--color-primary-dark); display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.8rem;">🚜</span> My Farm Details</h2>
@@ -96,19 +90,56 @@
         </div>
         
 
+        <!-- Quick Services Navigation Grid -->
+        <div style="max-width: 1200px; margin: 0 auto 2.5rem auto; padding: 0 2rem;">
+            <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.4rem; color: var(--color-primary-dark); font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>🌱</span> Services &amp; Agricultural Modules
+                </h2>
+                <span style="font-size: 0.9rem; color: var(--color-text-muted);">Direct Access</span>
+            </div>
+            <div class="quick-services-grid">
+                <a href="{{ url_for('soil_health') }}" class="service-quick-card">
+                    <span class="service-icon">🧪</span>
+                    <span class="service-title">Soil Health</span>
+                    <span class="service-desc">pH &amp; nutrients</span>
+                </a>
+                <a href="{{ url_for('crop_rec') }}" class="service-quick-card">
+                    <span class="service-icon">🌾</span>
+                    <span class="service-title">Crop Rec</span>
+                    <span class="service-desc">Smart recommendations</span>
+                </a>
+                <a href="{{ url_for('yield_prediction') }}" class="service-quick-card">
+                    <span class="service-icon">📈</span>
+                    <span class="service-title">Yield Prediction</span>
+                    <span class="service-desc">Harvest estimates</span>
+                </a>
+                <a href="{{ url_for('irrigation') }}" class="service-quick-card">
+                    <span class="service-icon">💧</span>
+                    <span class="service-title">Irrigation</span>
+                    <span class="service-desc">Watering schedules</span>
+                </a>
+                <a href="{{ url_for('farm_reports') }}" class="service-quick-card">
+                    <span class="service-icon">📊</span>
+                    <span class="service-title">Reports</span>
+                    <span class="service-desc">Analysis history</span>
+                </a>
+                <a href="{{ url_for('weather') }}" class="service-quick-card">
+                    <span class="service-icon">🌤️</span>
+                    <span class="service-title">Weather</span>
+                    <span class="service-desc">Forecasts &amp; alerts</span>
+                </a>
+                <a href="{{ url_for('analytics') }}" class="service-quick-card">
+                    <span class="service-icon">📉</span>
+                    <span class="service-title">Analytics</span>
+                    <span class="service-desc">Farm trends</span>
+                </a>
+            </div>
+        </div>
+
         <div class="dashboard-layout">
             <div class="card">
                 <h2 class="card-title">Analyse Field &amp; Soil Metrics</h2>
-                
-                <div class="progress-container">
-                    <div class="progress-step active" id="step-1" data-label="Enter Details">1</div>
-                    <div class="progress-step" id="step-2" data-label="Analysis">2</div>
-                    <div class="progress-step" id="step-3" data-label="Results">3</div>
-                </div>
-
-                <div style="background-color: #fff3e0; border: 2px solid #ffb74d; color: #e65100; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.9rem;">
-                    ⚠️ Warning: Please measure your farm acreage accurately. Estimating incorrect farm sizes can lead to insufficient seed calculations.
-                </div>
 
                 <form id="analysis-form">
                     <div class="form-group">

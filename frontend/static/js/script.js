@@ -217,4 +217,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Dropdown menu click & touch toggle
+    var dropdownElements = document.querySelectorAll('.dropdown');
+    dropdownElements.forEach(function(dd) {
+        var trigger = dd.querySelector('.dropbtn');
+        if (trigger) {
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var isOpen = dd.classList.contains('open');
+                // Close other dropdowns
+                dropdownElements.forEach(function(other) {
+                    if (other !== dd) other.classList.remove('open');
+                });
+                dd.classList.toggle('open', !isOpen);
+            });
+        }
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            dropdownElements.forEach(function(dd) {
+                dd.classList.remove('open');
+            });
+        }
+    });
+
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            dropdownElements.forEach(function(dd) {
+                dd.classList.remove('open');
+            });
+        }
+    });
 });
