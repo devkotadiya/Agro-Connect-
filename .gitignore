@@ -5,5 +5,7 @@ __pycache__/
 backend/venv/
 venv/
 instance/
+backend/instance/
+*.db
 .DS_Store
 __MACOSX/

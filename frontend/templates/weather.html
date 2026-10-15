@@ -3,9 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Dashboard - AgroConnect</title>
+    <title>Live Agricultural Weather - AgroConnect</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <style>
+        .weather-hero-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px rgba(30, 60, 114, 0.25);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .weather-hero-card::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+        .pill-btn {
+            background: #eef2f7;
+            border: 1px solid #d0d7de;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #333;
+        }
+        .pill-btn:hover {
+            background: var(--color-primary-dark);
+            color: #fff;
+            border-color: var(--color-primary-dark);
+        }
+        .live-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            margin-right: 6px;
+            box-shadow: 0 0 8px #2ecc71;
+            animation: pulse-dot 1.8s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+        .forecast-card {
+            background: #fff;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .forecast-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        }
+        .advisory-box {
+            padding: 1.2rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -28,7 +101,7 @@
                             <a href="{{ url_for('analytics') }}">Analytics</a>
                         </div>
                     </li>
-                                        {% if current_user.is_authenticated %}
+                    {% if current_user.is_authenticated %}
                     <li style="margin-left: auto;"><a href="{{ url_for('logout') }}" class="nav-login-btn">Logout</a></li>
                     {% else %}
                     <li style="margin-left: auto;"><a href="{{ url_for('login_page') }}" class="nav-login-btn">Login</a></li>
@@ -41,44 +114,113 @@
 
     <main class="section-padding">
         <div class="module-hero">
-            <h2>🌤️ Local Weather Monitor</h2>
-            <p>Real-time meteorological insights to inform your daily agricultural operations.</p>
+            <h2>🌤️ Live Agricultural Weather Intelligence</h2>
+            <p>Real-time live satellite & meteorological data providing hyper-local agronomic advisories for your farm.</p>
         </div>
 
-        <div style="max-width: 1000px; margin: 0 auto 3rem auto; background: #fff; padding: 2.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); border: 1px solid var(--color-border);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 style="color: var(--color-primary-dark); display: flex; align-items: center; gap: 0.5rem;"><span class="icon">📍</span> Farm Location: Sector 4</h3>
-                <button id="refresh-weather" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Refresh Data 🔄</button>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <div class="result-item">
-                    <h4>Temperature</h4>
-                    <p id="w-temp">28°C</p>
+        <div style="max-width: 1050px; margin: 0 auto 3rem auto;">
+            <!-- SEARCH AND LOCATION BAR -->
+            <div style="background: #fff; padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--color-border); box-shadow: 0 4px 12px rgba(0,0,0,0.04); margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 0.6rem; flex: 1; min-width: 280px;">
+                        <input type="text" id="city-search-input" placeholder="Search city, district, or village (e.g. Pune, Nashik, Nagpur)..." style="flex: 1; padding: 0.65rem 1rem; border: 1px solid var(--color-border); border-radius: 8px; font-size: 0.95rem;">
+                        <button id="search-btn" class="btn" style="padding: 0.65rem 1.4rem;">Search 🔍</button>
+                    </div>
+                    <div style="display: flex; gap: 0.6rem;">
+                        <button id="gps-btn" class="btn" style="background: #2e7d32; font-size: 0.9rem; padding: 0.65rem 1rem;">📍 Use My GPS</button>
+                        <button id="refresh-btn" class="btn" style="background: #546e7a; font-size: 0.9rem; padding: 0.65rem 1rem;">Refresh 🔄</button>
+                    </div>
                 </div>
-                <div class="result-item">
-                    <h4>Humidity</h4>
-                    <p id="w-hum">65%</p>
-                </div>
-                <div class="result-item">
-                    <h4>Wind Speed</h4>
-                    <p id="w-wind">12 km/h</p>
-                </div>
-                <div class="result-item">
-                    <h4>Rain Chance</h4>
-                    <p id="w-rain">20%</p>
-                </div>
-                <div class="result-item">
-                    <h4>UV Index</h4>
-                    <p id="w-uv">High (7)</p>
+                <!-- Quick City Pills -->
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.85rem; color: #666; font-weight: 600;">Popular Regions:</span>
+                    <button class="pill-btn quick-city" data-city="Pune">Pune</button>
+                    <button class="pill-btn quick-city" data-city="Nashik">Nashik</button>
+                    <button class="pill-btn quick-city" data-city="Nagpur">Nagpur</button>
+                    <button class="pill-btn quick-city" data-city="Mumbai">Mumbai</button>
+                    <button class="pill-btn quick-city" data-city="Delhi">Delhi</button>
+                    <button class="pill-btn quick-city" data-city="Bengaluru">Bengaluru</button>
+                    <button class="pill-btn quick-city" data-city="Hyderabad">Hyderabad</button>
                 </div>
             </div>
-            
-            <div id="w-alert" style="background: #fff3cd; color: #856404; padding: 1rem; border-left: 4px solid #ffeeba; border-radius: var(--radius);">
-                <strong>Weather Alert:</strong> Optimal conditions for harvesting. No severe weather expected in the next 48 hours.
+
+            <!-- HERO WEATHER CARD -->
+            <div class="weather-hero-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; margin-bottom: 0.4rem;">
+                            <span class="live-dot"></span>
+                            <span style="font-size: 0.85rem; letter-spacing: 0.5px; opacity: 0.9;">LIVE OPEN-METEO SATELLITE FEED</span>
+                        </div>
+                        <h2 id="loc-name" style="color: #fff; margin: 0 0 0.5rem 0; font-size: 1.8rem;">📍 Loading Live Weather...</h2>
+                        <p id="loc-coords" style="font-size: 0.9rem; opacity: 0.8; margin: 0;">Lat: -- | Lon: --</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span id="current-date-badge" style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem;">Updated: Just now</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 2rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span id="w-icon" style="font-size: 4.5rem; line-height: 1;">☀️</span>
+                        <div>
+                            <div id="w-temp" style="font-size: 3.5rem; font-weight: 800; line-height: 1;">--°C</div>
+                            <div id="w-cond" style="font-size: 1.2rem; font-weight: 600; opacity: 0.95; margin-top: 0.3rem;">Loading...</div>
+                        </div>
+                    </div>
+                    <div style="margin-left: auto; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 1.5rem;">
+                        <p style="margin: 0 0 0.4rem 0; font-size: 0.95rem; opacity: 0.9;">Feels Like: <strong id="w-feels" style="font-size: 1.1rem; color: #fff;">--°C</strong></p>
+                        <p style="margin: 0 0 0.4rem 0; font-size: 0.95rem; opacity: 0.9;">Precipitation: <strong id="w-precip" style="font-size: 1.1rem; color: #fff;">0.0 mm</strong></p>
+                        <p style="margin: 0; font-size: 0.95rem; opacity: 0.9;">Atmospheric Pressure: <strong id="w-press" style="font-size: 1.1rem; color: #fff;">-- hPa</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6 METRICS GRID -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">🌡️</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">Temperature</div>
+                    <div id="card-temp" style="font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-top: 0.3rem;">--°C</div>
+                </div>
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">💧</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">Humidity</div>
+                    <div id="card-hum" style="font-size: 1.4rem; font-weight: 700; color: #2980b9; margin-top: 0.3rem;">--%</div>
+                </div>
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">💨</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">Wind Speed</div>
+                    <div id="card-wind" style="font-size: 1.4rem; font-weight: 700; color: #27ae60; margin-top: 0.3rem;">-- km/h</div>
+                </div>
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">🌧️</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">Precipitation</div>
+                    <div id="card-rain" style="font-size: 1.4rem; font-weight: 700; color: #34495e; margin-top: 0.3rem;">-- mm</div>
+                </div>
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">☀️</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">UV Index</div>
+                    <div id="card-uv" style="font-size: 1.4rem; font-weight: 700; color: #d35400; margin-top: 0.3rem;">--</div>
+                </div>
+                <div style="background: #fff; padding: 1.2rem; border-radius: var(--radius); border: 1px solid var(--color-border); text-align: center;">
+                    <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">🧭</div>
+                    <div style="font-size: 0.85rem; color: #666; font-weight: 600;">Wind Dir</div>
+                    <div id="card-wdir" style="font-size: 1.4rem; font-weight: 700; color: #8e44ad; margin-top: 0.3rem;">--°</div>
+                </div>
+            </div>
+
+
+
+            <!-- SMART INTEGRATION CALL TO ACTION -->
+            <div style="background: #f1f8e9; border: 2px dashed #7cb342; border-radius: var(--radius); padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h4 style="margin: 0 0 0.3rem 0; color: #2e7d32;">🤖 Feed Live Weather into Machine Learning Model</h4>
+                    <p style="margin: 0; font-size: 0.9rem; color: #555;">Automatically pre-fill today's live temperature, humidity, and rainfall into the AI Crop Recommendation engine.</p>
+                </div>
+                <button id="apply-to-ml-btn" class="btn" style="background: #2e7d32; font-weight: 700; padding: 0.75rem 1.4rem;">Run ML Crop Predictor →</button>
             </div>
         </div>
-
 
         <div style="text-align: center; margin-bottom: 2rem;">
             <a href="{{ url_for('index') }}" class="btn" style="background-color: transparent; color: var(--color-primary-dark); border: 2px solid var(--color-primary-dark);">← Back to Home</a>
@@ -86,72 +228,144 @@
     </main>
 
     <footer>
-                <div class="footer-inner">
+        <div class="footer-inner">
             <p>&copy; <span id="copyright-year"></span> AgroConnect. Data-Driven Precision Agriculture &amp; Yield Analytics.</p>
         </div>
     </footer>
+    
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
-        document.getElementById('refresh-weather').addEventListener('click', function() {
-            const btn = this;
-            btn.textContent = 'Updating...';
-            btn.disabled = true;
-            
-            setTimeout(() => {
-                const temp = Math.floor(Math.random() * 15) + 20; // 20 to 35
-                const hum = Math.floor(Math.random() * 40) + 40; // 40 to 80
-                const wind = Math.floor(Math.random() * 20) + 5; // 5 to 25
-                const rain = Math.floor(Math.random() * 100);
-                const uv = Math.floor(Math.random() * 10) + 1;
-                
-                document.getElementById('w-temp').textContent = temp + '°C';
-                document.getElementById('w-hum').textContent = hum + '%';
-                document.getElementById('w-wind').textContent = wind + ' km/h';
-                document.getElementById('w-rain').textContent = rain + '%';
-                
-                let uvText = uv;
-                if(uv < 3) uvText = 'Low (' + uv + ')';
-                else if(uv < 6) uvText = 'Moderate (' + uv + ')';
-                else if(uv < 8) uvText = 'High (' + uv + ')';
-                else uvText = 'Very High (' + uv + ')';
-                document.getElementById('w-uv').textContent = uvText;
-                
-                const alertEl = document.getElementById('w-alert');
-                if (rain > 70) {
-                    alertEl.style.background = '#f8d7da';
-                    alertEl.style.color = '#721c24';
-                    alertEl.style.borderLeftColor = '#f5c6cb';
-                    alertEl.innerHTML = '<strong>Weather Alert:</strong> High probability of heavy rain. Delay pesticide application.';
-                } else if (temp > 32) {
-                    alertEl.style.background = '#fff3cd';
-                    alertEl.style.color = '#856404';
-                    alertEl.style.borderLeftColor = '#ffeeba';
-                    alertEl.innerHTML = '<strong>Weather Alert:</strong> High temperatures detected. Ensure adequate irrigation.';
-                } else {
-                    alertEl.style.background = '#d4edda';
-                    alertEl.style.color = '#155724';
-                    alertEl.style.borderLeftColor = '#c3e6cb';
-                    alertEl.innerHTML = '<strong>Weather Alert:</strong> Conditions are optimal for field operations.';
-                }
-                
-                btn.textContent = 'Refresh Data 🔄';
-                btn.disabled = false;
-            }, 800);
-        });
-    </script>
+        let latestWeatherData = null;
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const cu = JSON.parse(localStorage.getItem('currentUser'));
-            if (cu) {
-                const el1 = document.getElementById('weather-village');
-                const el2 = document.getElementById('weather-banner-village');
-                if (el1) el1.textContent = cu.village + ', ' + cu.district;
-                if (el2) el2.textContent = cu.village + ', ' + cu.district;
+        async function loadLiveWeather(queryParam = '') {
+            const locNameEl = document.getElementById('loc-name');
+            locNameEl.textContent = '📍 Fetching live satellite feed...';
+            
+            try {
+                const url = '/api/weather' + (queryParam ? '?' + queryParam : '');
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (data.success) {
+                    latestWeatherData = data;
+                    renderWeather(data);
+                } else {
+                    alert('Weather Error: ' + (data.message || 'Unable to retrieve live data'));
+                }
+            } catch (err) {
+                console.error(err);
+                locNameEl.textContent = '📍 Weather service temporarily offline';
+            }
+        }
+
+        function renderWeather(data) {
+            const loc = data.location;
+            const cur = data.current;
+            const adv = data.advisories;
+            
+            // Header
+            document.getElementById('loc-name').textContent = `📍 ${loc.name}`;
+            document.getElementById('loc-coords').textContent = `Latitude: ${loc.latitude.toFixed(2)}° | Longitude: ${loc.longitude.toFixed(2)}°`;
+            document.getElementById('current-date-badge').textContent = `Updated: ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+            if (loc.name) {
+                document.getElementById('city-search-input').value = loc.name;
+            }
+            
+            // Hero
+            document.getElementById('w-icon').textContent = cur.icon || '☀️';
+            document.getElementById('w-temp').textContent = `${Math.round(cur.temperature)}°C`;
+            document.getElementById('w-cond').textContent = cur.condition || 'Clear Sky';
+            document.getElementById('w-feels').textContent = `${Math.round(cur.feels_like)}°C`;
+            document.getElementById('w-precip').textContent = `${cur.precipitation} mm`;
+            document.getElementById('w-press').textContent = `${Math.round(cur.pressure)} hPa`;
+            
+            // Metrics Cards
+            document.getElementById('card-temp').textContent = `${cur.temperature}°C`;
+            document.getElementById('card-hum').textContent = `${cur.humidity}%`;
+            document.getElementById('card-wind').textContent = `${cur.wind_speed} km/h`;
+            document.getElementById('card-rain').textContent = `${cur.precipitation} mm`;
+            
+            let uvText = `${cur.uv_index}`;
+            if (cur.uv_index < 3) uvText += ' (Low)';
+            else if (cur.uv_index < 6) uvText += ' (Mod)';
+            else if (cur.uv_index < 8) uvText += ' (High)';
+            else uvText += ' (Very High)';
+            document.getElementById('card-uv').textContent = uvText;
+            document.getElementById('card-wdir').textContent = `${cur.wind_direction}°`;
+        }
+
+        // Search Handlers
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const city = document.getElementById('city-search-input').value.trim();
+            if (city) {
+                loadLiveWeather('city=' + encodeURIComponent(city));
             }
         });
-    </script>
 
-    <script src="{{ url_for('static', filename='js/services.js') }}"></script>
+        document.getElementById('city-search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const city = this.value.trim();
+                if (city) loadLiveWeather('city=' + encodeURIComponent(city));
+            }
+        });
+
+        // Quick City Buttons
+        document.querySelectorAll('.quick-city').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const city = this.getAttribute('data-city');
+                document.getElementById('city-search-input').value = city;
+                loadLiveWeather('city=' + encodeURIComponent(city));
+            });
+        });
+
+        // Refresh Button
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            const city = document.getElementById('city-search-input').value.trim();
+            if (city) {
+                loadLiveWeather('city=' + encodeURIComponent(city));
+            } else {
+                loadLiveWeather();
+            }
+        });
+
+        // GPS Button
+        document.getElementById('gps-btn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                this.textContent = 'Locating GPS... 📡';
+                this.disabled = true;
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        this.textContent = '📍 Use My GPS';
+                        this.disabled = false;
+                        loadLiveWeather(`lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                    },
+                    err => {
+                        this.textContent = '📍 Use My GPS';
+                        this.disabled = false;
+                        alert('Could not access GPS location. Searching by city name instead.');
+                    },
+                    { timeout: 8000 }
+                );
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+
+        // Apply Live Weather to Machine Learning Model
+        document.getElementById('apply-to-ml-btn').addEventListener('click', function() {
+            if (latestWeatherData && latestWeatherData.current) {
+                const c = latestWeatherData.current;
+                sessionStorage.setItem('agro_live_temp', c.temperature);
+                sessionStorage.setItem('agro_live_hum', c.humidity);
+                sessionStorage.setItem('agro_live_rain', c.precipitation > 0 ? (c.precipitation * 30) : '150');
+            }
+            window.location.href = "{{ url_for('crop_rec') }}";
+        });
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLiveWeather();
+        });
+    </script>
 </body>
 </html>
