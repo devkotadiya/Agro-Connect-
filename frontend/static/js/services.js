@@ -201,51 +201,71 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // --- PREFILL & LOGIC FOR CROP REC ---
+    // --- PREFILL & LOGIC FOR CROP REC (MACHINE LEARNING) ---
     const cForm = document.getElementById('crop-form');
     if (cForm) {
-        cForm.addEventListener('submit', function(e) {
+        cForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            document.getElementById('crop-placeholder').style.display = 'none';
-            document.getElementById('crop-result').style.display = 'block';
             
-            const seasonEl = document.getElementById('c-season');
-            const season = seasonEl ? seasonEl.value : '';
+            const btn = document.getElementById('crop-submit-btn') || cForm.querySelector('button[type="submit"]');
+            const originalBtnText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span>Analyzing with ML Model...</span> <span>⏳</span>';
             
-            const recEl = document.getElementById('res-rec');
-            const timeEl = document.getElementById('res-time');
-            const confEl = document.getElementById('res-conf');
+            const nVal = parseFloat(document.getElementById('c-n')?.value) || 80.0;
+            const pVal = parseFloat(document.getElementById('c-p')?.value) || 45.0;
+            const kVal = parseFloat(document.getElementById('c-k')?.value) || 40.0;
+            const phVal = parseFloat(document.getElementById('c-ph')?.value) || 6.5;
+            const tempVal = parseFloat(document.getElementById('c-temp')?.value) || 26.5;
+            const humVal = parseFloat(document.getElementById('c-hum')?.value) || 80.0;
+            const rainVal = parseFloat(document.getElementById('c-rain')?.value) || 200.0;
+            const soilVal = document.getElementById('c-soil')?.value || 'Loamy';
+            const seasonVal = document.getElementById('c-season')?.value || 'Kharif';
             
-            let recCrop = 'Wheat';
-            let conf = '92%';
-            let time = 'November to December';
-            
-            if (season.includes('Kharif')) {
-                recCrop = 'Rice (Paddy)'; conf = '96.5%'; time = 'June to July';
-            } else if (season.includes('Rabi')) {
-                recCrop = 'Wheat'; conf = '92.1%'; time = 'November to December';
-            } else if (season.includes('Zaid')) {
-                recCrop = 'Watermelon / Cucumber'; conf = '88.4%'; time = 'March to April';
+            try {
+                const response = await fetch('/api/crop-rec/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        n: nVal,
+                        p: pVal,
+                        k: kVal,
+                        ph: phVal,
+                        temperature: tempVal,
+                        humidity: humVal,
+                        rainfall: rainVal,
+                        soil: soilVal,
+                        season: seasonVal
+                    })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('crop-placeholder').style.display = 'none';
+                document.getElementById('crop-result').style.display = 'block';
+                
+                const recEl = document.getElementById('res-rec');
+                const timeEl = document.getElementById('res-time');
+                const confEl = document.getElementById('res-conf');
+                const reasonEl = document.getElementById('res-reason');
+                
+                if (data.success) {
+                    if (recEl) { recEl.textContent = data.recommended_crop; recEl.style.color = '#2ecc71'; }
+                    if (confEl) { confEl.textContent = data.confidence; confEl.style.color = '#2ecc71'; }
+                    if (timeEl) { timeEl.textContent = data.sowing_time; timeEl.style.color = '#333'; }
+                    if (reasonEl) { reasonEl.textContent = data.reason; reasonEl.style.color = '#333'; }
+                    
+                    showToast(`🤖 AI Model predicted: <strong>${data.recommended_crop}</strong> (${data.confidence})`);
+                } else {
+                    alert('Prediction error: ' + (data.message || 'Unable to predict'));
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('❌ Server error during ML prediction.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnText;
             }
-            
-            const reasonEl = document.getElementById('res-reason');
-            let reasonStr = 'Optimal based on seasonal constraints and average temperature.';
-            
-            if (season.includes('Kharif')) {
-                reasonStr = 'High humidity and rainfall during Kharif season are ideal for Rice.';
-            } else if (season.includes('Rabi')) {
-                reasonStr = 'Lower temperatures and moderate water availability suit Wheat perfectly.';
-            } else if (season.includes('Zaid')) {
-                reasonStr = 'Warm, dry weather is optimal for short-duration crops like Watermelon.';
-            }
-
-            if (recEl) { recEl.textContent = recCrop; recEl.style.color = '#2ecc71'; }
-            if (timeEl) { timeEl.textContent = time; timeEl.style.color = '#333'; }
-            if (confEl) { confEl.textContent = conf; confEl.style.color = '#333'; }
-            if (reasonEl) { reasonEl.textContent = reasonStr; reasonEl.style.color = '#333'; }
-            
-            showToast('✅ Analysis completed successfully.');
-            saveAnalysis('Crop Recommendation', { season: season }, { recommended_crop: recCrop, confidence: conf, time: time, reason: reasonStr });
         });
     }
 });

@@ -47,38 +47,68 @@
 
         <div class="module-container">
             <div class="input-card">
-                <h3><span class="icon">🔍</span> Field Data</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;"><span class="icon">🔍</span> Field & Soil Data</h3>
+                    <span style="background: #e8f5e9; color: var(--color-primary-dark); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(46, 125, 50, 0.3);">⚡ ML Model Trained</span>
+                </div>
                 <form id="crop-form">
-                    <div class="form-group">
-                        <label for="c-soil">Soil Type</label>
-                        <select id="c-soil">
-                            <option>Loamy</option>
-                            <option>Clay</option>
-                            <option>Sandy</option>
-                            <option>Black Soil</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-n">Nitrogen (N)</label>
+                            <input type="number" id="c-n" step="0.1" value="80" placeholder="e.g. 80" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-p">Phosphorus (P)</label>
+                            <input type="number" id="c-p" step="0.1" value="45" placeholder="e.g. 45" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-k">Potassium (K)</label>
+                            <input type="number" id="c-k" step="0.1" value="40" placeholder="e.g. 40" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="c-temp">Temperature (°C)</label>
-                        <input type="number" id="c-temp" placeholder="e.g. 28">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-ph">Soil pH</label>
+                            <input type="number" id="c-ph" step="0.1" min="0" max="14" value="6.5" placeholder="e.g. 6.5" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-soil">Soil Type</label>
+                            <select id="c-soil">
+                                <option value="Loamy">Loamy</option>
+                                <option value="Clay">Clay</option>
+                                <option value="Sandy">Sandy</option>
+                                <option value="Black Soil" selected>Black Soil</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="c-hum">Humidity (%)</label>
-                        <input type="number" id="c-hum" placeholder="e.g. 60">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-temp">Temperature (°C)</label>
+                            <input type="number" id="c-temp" step="0.1" value="26.5" placeholder="e.g. 26.5" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-hum">Humidity (%)</label>
+                            <input type="number" id="c-hum" step="0.1" value="80" placeholder="e.g. 80" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="c-rain">Rainfall (mm)</label>
-                        <input type="number" id="c-rain" placeholder="e.g. 150">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-bottom: 1.2rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-rain">Rainfall (mm)</label>
+                            <input type="number" id="c-rain" step="0.1" value="200" placeholder="e.g. 200" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="c-season">Season</label>
+                            <select id="c-season">
+                                <option value="Kharif (Monsoon)" selected>Kharif (Monsoon)</option>
+                                <option value="Rabi (Winter)">Rabi (Winter)</option>
+                                <option value="Zaid (Summer)">Zaid (Summer)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="c-season">Season</label>
-                        <select id="c-season">
-                            <option>Kharif (Monsoon)</option>
-                            <option>Rabi (Winter)</option>
-                            <option>Zaid (Summer)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn" style="width: 100%;">Recommend Crop</button>
+                    <button type="submit" id="crop-submit-btn" class="btn" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                        <span>Predict Best Crop</span>
+                        <span>🤖</span>
+                    </button>
                 </form>
             </div>
 
@@ -121,7 +151,25 @@
         </div>
     </footer>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    
     <script src="{{ url_for('static', filename='js/services.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const liveTemp = sessionStorage.getItem('agro_live_temp');
+            const liveHum = sessionStorage.getItem('agro_live_hum');
+            const liveRain = sessionStorage.getItem('agro_live_rain');
+            if (liveTemp && document.getElementById('c-temp')) {
+                document.getElementById('c-temp').value = Math.round(parseFloat(liveTemp));
+                sessionStorage.removeItem('agro_live_temp');
+            }
+            if (liveHum && document.getElementById('c-hum')) {
+                document.getElementById('c-hum').value = Math.round(parseFloat(liveHum));
+                sessionStorage.removeItem('agro_live_hum');
+            }
+            if (liveRain && document.getElementById('c-rain')) {
+                document.getElementById('c-rain').value = Math.round(parseFloat(liveRain));
+                sessionStorage.removeItem('agro_live_rain');
+            }
+        });
+    </script>
 </body>
 </html>
